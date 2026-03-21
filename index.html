@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>TreeTask | Hierarchical Group & Task Manager</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f4f7fc 0%, #eef2f5 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      color: #1e2a3e;
+    }
+
+    /* main container */
+    .app-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(2px);
+      border-radius: 2rem;
+      box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+      padding: 1.8rem 2rem;
+      transition: all 0.2s;
+    }
+
+    /* header & toolbar */
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 2px solid #cbdde6;
+      padding-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1F6E8C, #2C3E66);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.3px;
+    }
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    button, .btn-style {
+      background: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 2.5rem;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
+    button i { font-style: normal; font-weight: 600; }
+    .btn-primary {
+      background: #1F6E8C;
+      color: white;
+      box-shadow: 0 4px 8px rgba(31,110,140,0.2);
+    }
+    .btn-primary:hover { background: #0e5a74; transform: translateY(-1px); }
+    .btn-outline {
+      border: 1px solid #b9cfdf;
+      background: #ffffffdd;
+    }
+    .btn-outline:hover { background: white; border-color: #1F6E8C; }
+    .btn-danger { color: #b91c1c; background: #fff0f0; }
+    .btn-danger:hover { background: #ffe0e0; }
+
+    /* search bar */
+    .search-section {
+      margin-bottom: 1.5rem;
+    }
+    #searchInput {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 2rem;
+      border: 1px solid #cbdde6;
+      font-size: 0.9rem;
+      background: white;
+      outline: none;
+      transition: 0.2s;
+    }
+    #searchInput:focus { border-color: #1F6E8C; box-shadow: 0 0 0 3px rgba(31,110,140,0.2); }
+
+    /* tree container */
+    .tree-container {
+      margin-top: 1rem;
+      max-height: 65vh;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+
+    /* node styling (groups & tasks) */
+    .tree-node {
+      margin-left: 0px;
+      list-style: none;
+      position: relative;
+    }
+    .node-content {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0.5rem 0.5rem 0.5rem 0rem;
+      border-radius: 1rem;
+      transition: background 0.1s;
+      background: transparent;
+    }
+    .node-content:hover { background: #f0f6fa; }
+    .indent-line {
+      margin-left: 1.5rem;
+      border-left: 2px solid #cbdde6;
+      padding-left: 1rem;
+    }
+    .group-header {
+      font-weight: 600;
+      background: #eef3f9;
+      border-radius: 1rem;
+      padding: 0.2rem 0.5rem 0.2rem 0;
+    }
+    .expand-btn {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      width: 28px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #2c5a74;
+      box-shadow: none;
+      padding: 0;
+    }
+    .title-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      word-break: break-word;
+      flex: 1;
+    }
+    .task-title {
+      text-decoration: none;
+    }
+    .task-completed {
+      text-decoration: line-through;
+      color: #7f8c8d;
+      opacity: 0.75;
+    }
+    .badge {
+      font-size: 0.7rem;
+      background: #e2eaf1;
+      padding: 0.2rem 0.6rem;
+      border-radius: 30px;
+    }
+    .action-group {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+    .icon-btn {
+      background: transparent;
+      box-shadow: none;
+      padding: 0.3rem 0.7rem;
+      font-size: 0.75rem;
+      border-radius: 2rem;
+    }
+    .desc-small {
+      font-size: 0.7rem;
+      color: #5a6e7c;
+      margin-left: 30px;
+      margin-top: -4px;
+      margin-bottom: 5px;
+      padding-left: 8px;
+      border-left: 2px dotted #bdd4e2;
+    }
+    hr { margin: 8px 0; }
+    .empty-msg {
+      text-align: center;
+      padding: 3rem;
+      color: #7e95aa;
+    }
+    @media (max-width: 680px) {
+      .app-container { padding: 1.2rem; }
+      .toolbar button { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+    }
+    /* drag placeholder */
+    .drag-over {
+      border-top: 3px solid #1F6E8C;
+      background: #e4f0f5;
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <div class="header">
+    <h1>📁 TreeTask · Groups & Tasks</h1>
+    <div class="toolbar">
+      <button id="addRootGroupBtn" class="btn-primary">➕ New Group</button>
+      <button id="exportJsonBtn" class="btn-outline">📤 Export JSON</button>
+      <button id="importJsonBtn" class="btn-outline">📥 Import JSON</button>
+      <input type="file" id="importFileInput" accept=".json" style="display: none;">
+    </div>
+  </div>
+  <div class="search-section">
+    <input type="text" id="searchInput" placeholder="🔍 Search tasks or groups by title... (filter live)">
+  </div>
+  <div class="tree-container" id="treeContainer">
+    <div class="empty-msg">✨ No groups yet. Click "New Group" to start.</div>
+  </div>
+</div>
+
+<script>
+  // ---------- DATA MODEL ----------
+  // Item types: 'group' or 'task'
+  // Group: { id, type, title, description, children: [] (mixed tasks/groups), collapsed (bool) }
+  // Task: { id, type, title, description, status (done/not done) }
+  class DataManager {
+    constructor() {
+      this.rootGroups = [];    // array of group nodes (top-level groups)
+      this.nextId = 1;
+      this.loadFromLocalStorage();
+    }
+
+    generateId() { return Date.now() + '-' + Math.random().toString(36).substr(2, 8) + (this.nextId++); }
+
+    // Helper: find node by id recursively (group or task) and return {parent, node, parentArr}
+    findNodeById(id, nodeList = this.rootGroups, parentArr = null, parentNode = null) {
+      for (let i = 0; i < nodeList.length; i++) {
+        const item = nodeList[i];
+        if (item.id === id) return { node: item, parentArr: nodeList, index: i, parentNode };
+        if (item.type === 'group' && item.children && item.children.length) {
+          const found = this.findNodeById(id, item.children, item.children, item);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    // CRUD for groups (create new group inside parentGroupId = null for root)
+    addGroup(title, description = '', parentGroupId = null) {
+      const newGroup = {
+        id: this.generateId(),
+        type: 'group',
+        title: title.trim() || 'Unnamed Group',
+        description: description,
+        children: [],
+        collapsed: false
+      };
+      if (parentGroupId === null) {
+        this.rootGroups.push(newGroup);
+      } else {
+        const parent = this.findNodeById(parentGroupId);
+        if (parent && parent.node.type === 'group') {
+          parent.node.children.push(newGroup);
+        } else return false;
+      }
+      this.saveToLocalStorage();
+      return newGroup;
+    }
+
+    // delete group (recursively)
+    deleteGroup(groupId) {
+      const context = this.findNodeById(groupId);
+      if (context && context.node.type === 'group') {
+        const idx = context.index;
+        context.parentArr.splice(idx, 1);
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    editGroup(groupId, newTitle, newDescription) {
+      const ctx = this.findNodeById(groupId);
+      if (ctx && ctx.node.type === 'group') {
+        if (newTitle !== undefined) ctx.node.title = newTitle.trim() || 'Group';
+        if (newDescription !== undefined) ctx.node.description = newDescription;
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    // Task operations: add task inside group
+    addTask(groupId, taskTitle, taskDesc = '', status = 'not done') {
+      const ctx = this.findNodeById(groupId);
+      if (ctx && ctx.node.type === 'group') {
+        const newTask = {
+          id: this.generateId(),
+          type: 'task',
+          title: taskTitle.trim() || 'Untitled Task',
+          description: taskDesc,
+          status: status
+        };
+        ctx.node.children.push(newTask);
+        this.saveToLocalStorage();
+        return newTask;
+      }
+      return false;
+    }
+
+    deleteTask(taskId) {
+      const ctx = this.findNodeById(taskId);
+      if (ctx && ctx.node.type === 'task') {
+        ctx.parentArr.splice(ctx.index, 1);
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    editTask(taskId, updates) {
+      const ctx = this.findNodeById(taskId);
+      if (ctx && ctx.node.type === 'task') {
+        if (updates.title !== undefined) ctx.node.title = updates.title.trim() || 'Task';
+        if (updates.description !== undefined) ctx.node.description = updates.description;
+        if (updates.status !== undefined) ctx.node.status = updates.status;
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    toggleTaskStatus(taskId) {
+      const ctx = this.findNodeById(taskId);
+      if (ctx && ctx.node.type === 'task') {
+        ctx.node.status = ctx.node.status === 'done' ? 'not done' : 'done';
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    toggleCollapse(groupId) {
+      const ctx = this.findNodeById(groupId);
+      if (ctx && ctx.node.type === 'group') {
+        ctx.node.collapsed = !ctx.node.collapsed;
+        this.saveToLocalStorage();
+        return true;
+      }
+      return false;
+    }
+
+    // Export full data
+    exportData() {
+      return JSON.stringify({ rootGroups: this.rootGroups, version: '1.0' }, null, 2);
+    }
+
+    importData(jsonStr) {
+      try {
+        const parsed = JSON.parse(jsonStr);
+        if (parsed.rootGroups && Array.isArray(parsed.rootGroups)) {
+          this.rootGroups = parsed.rootGroups;
+          // ensure missing fields (collapsed default false)
+          const fixNode = (node) => {
+            if (node.type === 'group') {
+              if (node.collapsed === undefined) node.collapsed = false;
+              if (!node.children) node.children = [];
+              node.children.forEach(child => fixNode(child));
+            } else if (node.type === 'task') {
+              if (!node.status) node.status = 'not done';
+              if (!node.description) node.description = '';
+            }
+          };
+          this.rootGroups.forEach(g => fixNode(g));
+          this.saveToLocalStorage();
+          return true;
+        }
+        return false;
+      } catch(e) { return false; }
+    }
+
+    saveToLocalStorage() {
+      localStorage.setItem('taskTreeData', this.exportData());
+    }
+
+    loadFromLocalStorage() {
+      const stored = localStorage.getItem('taskTreeData');
+      if (stored) {
+        this.importData(stored);
+      } else {
+        // demo seed data
+        this.rootGroups = [];
+        const demoGrp = this.addGroup('📌 Work Projects', 'Client & internal tasks', null);
+        if (demoGrp) {
+          this.addTask(demoGrp.id, 'Review pull requests', 'GitHub reviews', 'not done');
+          this.addTask(demoGrp.id, 'Update documentation', '', 'done');
+          const subGroup = this.addGroup('🔧 Devops', 'Infrastructure', demoGrp.id);
+          this.addTask(subGroup.id, 'Setup monitoring', 'Prometheus', 'not done');
+          const personal = this.addGroup('🏡 Personal', 'Chores & hobbies', null);
+          this.addTask(personal.id, 'Buy groceries', 'Organic section', 'not done');
+        }
+        this.saveToLocalStorage();
+      }
+    }
+  }
+
+  // ---------- UI RENDERER (Tree) ----------
+  class TreeRenderer {
+    constructor(manager, containerEl, searchInputEl) {
+      this.manager = manager;
+      this.container = containerEl;
+      this.searchInput = searchInputEl;
+      this.filterText = '';
+      this.bindEvents();
+    }
+
+    bindEvents() {
+      this.searchInput.addEventListener('input', (e) => {
+        this.filterText = e.target.value.toLowerCase().trim();
+        this.render();
+      });
+    }
+
+    // recursive render with filter highlighting
+    renderNode(item, level = 0, parentGroupIdForDrag = null) {
+      if (item.type === 'group') {
+        const isCollapsed = item.collapsed;
+        const matchesFilter = this.filterText === '' || item.title.toLowerCase().includes(this.filterText) || 
+                              (item.description && item.description.toLowerCase().includes(this.filterText));
+        // For groups, we need to check children visibility if any child matches filter OR group matches itself
+        let hasVisibleChild = false;
+        if (!isCollapsed && item.children) {
+          hasVisibleChild = item.children.some(child => {
+            if (child.type === 'group') {
+              return this.nodeMatchesFilter(child);
+            } else {
+              return child.title.toLowerCase().includes(this.filterText) || (child.description && child.description.toLowerCase().includes(this.filterText));
+            }
+          });
+        }
+        const visible = (matchesFilter || hasVisibleChild || this.filterText === '');
+        if (!visible) return null;
+
+        const groupDiv = document.createElement('div');
+        groupDiv.className = 'tree-node';
+        groupDiv.setAttribute('data-id', item.id);
+        groupDiv.setAttribute('data-type', 'group');
+        groupDiv.draggable = true;
+        groupDiv.addEventListener('dragstart', (e) => this.onDragStart(e, item.id, 'group'));
+        groupDiv.addEventListener('dragover', (e) => e.preventDefault());
+        groupDiv.addEventListener('drop', (e) => this.onDrop(e, item.id, 'group'));
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'node-content';
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'expand-btn';
+        expandBtn.textContent = isCollapsed ? '▶' : '▼';
+        expandBtn.addEventListener('click', (e) => { e.stopPropagation(); this.manager.toggleCollapse(item.id); this.render(); });
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'title-text';
+        titleSpan.innerHTML = `<strong>📂 ${this.escapeHtml(item.title)}</strong> ${item.description ? `<span class="badge">${this.escapeHtml(item.description.substring(0, 30))}</span>` : ''}`;
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'action-group';
+        actionDiv.innerHTML = `
+          <button class="icon-btn" data-action="editGroup" data-id="${item.id}">✏️ Edit</button>
+          <button class="icon-btn btn-danger" data-action="deleteGroup" data-id="${item.id}">🗑 Del</button>
+          <button class="icon-btn" data-action="addTask" data-id="${item.id}">➕ Task</button>
+          <button class="icon-btn" data-action="addSubGroup" data-id="${item.id}">📁 Subgroup</button>
+        `;
+        contentDiv.appendChild(expandBtn);
+        contentDiv.appendChild(titleSpan);
+        contentDiv.appendChild(actionDiv);
+        groupDiv.appendChild(contentDiv);
+        
+        if (!isCollapsed && item.children && item.children.length) {
+          const childrenContainer = document.createElement('div');
+          childrenContainer.className = 'indent-line';
+          item.children.forEach(child => {
+            const childEl = this.renderNode(child, level + 1, item.id);
+            if (childEl) childrenContainer.appendChild(childEl);
+          });
+          groupDiv.appendChild(childrenContainer);
+        } else if (!isCollapsed && (!item.children || item.children.length === 0)) {
+          const emptyHint = document.createElement('div');
+          emptyHint.className = 'desc-small';
+          emptyHint.textContent = '✨ No tasks or subgroups — click +Task or Subgroup';
+          emptyHint.style.marginLeft = '2rem';
+          groupDiv.appendChild(emptyHint);
+        }
+        return groupDiv;
+      } 
+      else if (item.type === 'task') {
+        const matches = this.filterText === '' || item.title.toLowerCase().includes(this.filterText) || (item.description && item.description.toLowerCase().includes(this.filterText));
+        if (!matches) return null;
+        const taskDiv = document.createElement('div');
+        taskDiv.className = 'tree-node';
+        taskDiv.setAttribute('data-id', item.id);
+        taskDiv.setAttribute('data-type', 'task');
+        taskDiv.draggable = true;
+        taskDiv.addEventListener('dragstart', (e) => this.onDragStart(e, item.id, 'task'));
+        taskDiv.addEventListener('dragover', (e) => e.preventDefault());
+        taskDiv.addEventListener('drop', (e) => this.onDrop(e, null, null, item.id));
+        
+        const content = document.createElement('div');
+        content.className = 'node-content';
+        const statusIcon = document.createElement('button');
+        statusIcon.className = 'expand-btn';
+        statusIcon.style.fontSize = '1rem';
+        statusIcon.textContent = item.status === 'done' ? '✅' : '◻️';
+        statusIcon.addEventListener('click', (e) => { e.stopPropagation(); this.manager.toggleTaskStatus(item.id); this.render(); });
+        const taskTitle = document.createElement('span');
+        taskTitle.className = `title-text ${item.status === 'done' ? 'task-completed' : ''}`;
+        taskTitle.innerHTML = `📌 ${this.escapeHtml(item.title)}`;
+        const descSpan = item.description ? `<span class="badge">📝 ${this.escapeHtml(item.description.substring(0, 40))}</span>` : '';
+        taskTitle.insertAdjacentHTML('beforeend', descSpan);
+        const actions = document.createElement('div');
+        actions.className = 'action-group';
+        actions.innerHTML = `
+          <button class="icon-btn" data-action="editTask" data-id="${item.id}">✏️</button>
+          <button class="icon-btn btn-danger" data-action="deleteTask" data-id="${item.id}">🗑</button>
+        `;
+        content.appendChild(statusIcon);
+        content.appendChild(taskTitle);
+        content.appendChild(actions);
+        taskDiv.appendChild(content);
+        if (item.description && this.filterText === '') {
+          const smallDesc = document.createElement('div');
+          smallDesc.className = 'desc-small';
+          smallDesc.textContent = item.description;
+          taskDiv.appendChild(smallDesc);
+        }
+        return taskDiv;
+      }
+      return null;
+    }
+
+    nodeMatchesFilter(groupNode) {
+      if (this.filterText === '') return true;
+      if (groupNode.title.toLowerCase().includes(this.filterText)) return true;
+      if (groupNode.description && groupNode.description.toLowerCase().includes(this.filterText)) return true;
+      if (groupNode.children) {
+        return groupNode.children.some(c => {
+          if (c.type === 'task') return c.title.toLowerCase().includes(this.filterText);
+          else return this.nodeMatchesFilter(c);
+        });
+      }
+      return false;
+    }
+
+    render() {
+      this.container.innerHTML = '';
+      if (this.manager.rootGroups.length === 0 && this.filterText === '') {
+        this.container.innerHTML = '<div class="empty-msg">📭 No groups. Click "New Group" to begin.</div>';
+        return;
+      }
+      let hasVisible = false;
+      this.manager.rootGroups.forEach(group => {
+        const el = this.renderNode(group);
+        if (el) { this.container.appendChild(el); hasVisible = true; }
+      });
+      if (!hasVisible && this.filterText !== '') {
+        this.container.innerHTML = '<div class="empty-msg">🔍 No matching groups or tasks.</div>';
+      }
+      this.attachActionListeners();
+    }
+
+    attachActionListeners() {
+      this.container.querySelectorAll('[data-action]').forEach(btn => {
+        btn.removeEventListener('click', this.boundHandler);
+        const handler = (e) => {
+          e.stopPropagation();
+          const action = btn.getAttribute('data-action');
+          const id = btn.getAttribute('data-id');
+          if (action === 'editGroup') this.promptEditGroup(id);
+          else if (action === 'deleteGroup') if(confirm('Delete group and all contents?')) this.manager.deleteGroup(id) && this.render();
+          else if (action === 'addTask') this.promptAddTask(id);
+          else if (action === 'addSubGroup') this.promptAddSubGroup(id);
+          else if (action === 'editTask') this.promptEditTask(id);
+          else if (action === 'deleteTask') if(confirm('Delete task?')) this.manager.deleteTask(id) && this.render();
+        };
+        btn.addEventListener('click', handler);
+        btn.boundHandler = handler;
+      });
+    }
+
+    promptEditGroup(groupId) {
+      const ctx = this.manager.findNodeById(groupId);
+      if(ctx && ctx.node.type === 'group'){
+        const newTitle = prompt('Edit group title:', ctx.node.title);
+        if(newTitle !== null){
+          const newDesc = prompt('Edit description (optional):', ctx.node.description || '');
+          this.manager.editGroup(groupId, newTitle, newDesc !== null ? newDesc : ctx.node.description);
+          this.render();
+        }
+      }
+    }
+    promptAddTask(groupId){
+      const title = prompt('Task title:');
+      if(title && title.trim()){
+        const desc = prompt('Task description (optional):', '');
+        this.manager.addTask(groupId, title, desc || '', 'not done');
+        this.render();
+      }
+    }
+    promptAddSubGroup(groupId){
+      const title = prompt('Sub-group name:');
+      if(title && title.trim()){
+        const desc = prompt('Group description (optional):', '');
+        this.manager.addGroup(title, desc || '', groupId);
+        this.render();
+      }
+    }
+    promptEditTask(taskId){
+      const ctx = this.manager.findNodeById(taskId);
+      if(ctx && ctx.node.type === 'task'){
+        const newTitle = prompt('Edit task title:', ctx.node.title);
+        if(newTitle !== null){
+          const newDesc = prompt('Edit description:', ctx.node.description || '');
+          this.manager.editTask(taskId, { title: newTitle, description: newDesc !== null ? newDesc : ctx.node.description });
+          this.render();
+        }
+      }
+    }
+    onDragStart(e, id, type) { e.dataTransfer.setData('text/plain', JSON.stringify({ id, type })); e.dataTransfer.effectAllowed = 'move'; }
+    onDrop(e, targetGroupId, targetGroupType, draggedTaskIdForReorder) { 
+      e.preventDefault();
+      const raw = e.dataTransfer.getData('text/plain');
+      if(!raw) return;
+      const { id, type } = JSON.parse(raw);
+      if(type === 'task' && targetGroupId && targetGroupId !== null){
+        // reorder not implemented fully (bonus), but we can at least move task to another group
+        const taskCtx = this.manager.findNodeById(id);
+        if(taskCtx && taskCtx.node.type === 'task'){
+          const targetGroupCtx = this.manager.findNodeById(targetGroupId);
+          if(targetGroupCtx && targetGroupCtx.node.type === 'group'){
+            // remove from old parent
+            taskCtx.parentArr.splice(taskCtx.index,1);
+            targetGroupCtx.node.children.push(taskCtx.node);
+            this.manager.saveToLocalStorage();
+            this.render();
+          }
+        }
+      } else if(type === 'group' && targetGroupId){
+        // move group inside another group
+        const groupCtx = this.manager.findNodeById(id);
+        const targetCtx = this.manager.findNodeById(targetGroupId);
+        if(groupCtx && groupCtx.node.type === 'group' && targetCtx && targetCtx.node.type === 'group' && id !== targetGroupId){
+          groupCtx.parentArr.splice(groupCtx.index,1);
+          targetCtx.node.children.push(groupCtx.node);
+          this.manager.saveToLocalStorage();
+          this.render();
+        }
+      }
+    }
+
+    escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m === '&') return '&amp;'; if(m === '<') return '&lt;'; if(m === '>') return '&gt;'; return m;}); }
+  }
+
+  // ---------- APP INIT ----------
+  const manager = new DataManager();
+  const container = document.getElementById('treeContainer');
+  const searchInput = document.getElementById('searchInput');
+  const renderer = new TreeRenderer(manager, container, searchInput);
+  renderer.render();
+
+  // Toolbar buttons
+  document.getElementById('addRootGroupBtn').addEventListener('click', () => {
+    const name = prompt('New top-level group name:', 'My Group');
+    if(name && name.trim()) manager.addGroup(name, '', null);
+    renderer.render();
+  });
+  document.getElementById('exportJsonBtn').addEventListener('click', () => {
+    const dataStr = manager.exportData();
+    const blob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tasktree_${new Date().toISOString().slice(0,19)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+  const importFile = document.getElementById('importFileInput');
+  document.getElementById('importJsonBtn').addEventListener('click', () => importFile.click());
+  importFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(file){
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if(manager.importData(ev.target.result)) { renderer.render(); alert('Import successful!'); }
+        else alert('Invalid JSON structure.');
+        importFile.value = '';
+      };
+      reader.readAsText(file);
+    }
+  });
+  // auto-save is already built into every mutation (saveToLocalStorage)
+</script>
+</body>
+</html>
