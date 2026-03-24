@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Document Editors Hub | Executive Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f0f2f5;
+            --bg-secondary: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --accent-blue: #2563eb;
+            --accent-blue-light: #eff6ff;
+            --accent-indigo: #6366f1;
+            --accent-slate: #334155;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-red: #ef4444;
+            --border-light: #e5e7eb;
+            --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08);
+            --shadow-md: 0 4px 12px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius-sm: 6px;
+            --radius-md: 0.65rem;
+            --radius-lg: 1rem;
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Header ── */
+        header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 15px;
+            padding: 8px 0;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover { color: var(--text-primary); }
+
+        .nav-link.active { color: var(--accent-blue); }
+
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--accent-blue);
+            border-radius: 2px;
+        }
+
+        /* ── Main Content ── */
+        .main-content {
+            padding: 32px 0 48px;
+        }
+
+        /* ── Dash header (inside main) ── */
+        .dash-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .dash-header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
+        }
+
+        .dash-header h1 span { color: var(--accent-blue); }
+
+        .dash-meta {
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            font-family: 'DM Mono', monospace;
+        }
+
+        /* ── Dashboard Grid ── */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 0.9fr;
+            grid-auto-rows: auto;
+            gap: 18px;
+        }
+
+        .panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: box-shadow 0.2s ease;
+        }
+        .panel:hover { box-shadow: var(--shadow-md); }
+
+        .panel-header {
+            padding: 0.9rem 1.2rem;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: #fafbfc;
+        }
+
+        .panel-header h2 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header h2 i {
+            color: var(--accent-blue);
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .panel-content {
+            padding: 1rem;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 420px;
+        }
+
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-track { background: transparent; }
+        .panel-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+
+        /* Panel layout assignments */
+        .projects-panel   { grid-row: span 1; grid-column: span 1; }
+        .devseason-panel  { grid-row: span 1; grid-column: span 1; }
+        .bigtasks-panel   { grid-column: span 2; grid-row: span 1; }
+        .individual-panel { grid-column: span 1; grid-row: span 1; }
+        .tools-panel      { grid-column: span 1; grid-row: span 1; }
+
+        /* ── Cards / Items ── */
+        .project-card, .team-task-item, .subtask-item {
+            background: #fafbfc;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 11px 13px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .project-card:hover, .team-task-item:hover {
+            background: #fff;
+            border-color: #c7d2fe;
+            box-shadow: 0 2px 8px rgb(37 99 235 / 0.07);
+        }
+
+        .project-card.selected { border-color: var(--accent-blue); background: #eff6ff; }
+        .team-task-item.selected { border-color: var(--accent-blue); background: #eff6ff; }
+
+        /* ── Progress ── */
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 20px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+            margin: 8px 0 4px;
+        }
+
+        .progress-fill {
+            background: var(--accent-blue);
+            height: 100%;
+            width: 0%;
+            border-radius: 20px;
+            transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── Badges ── */
+        .badge {
+            font-size: 0.68rem;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 30px;
+            background: #f1f5f9;
+            color: #475569;
+            white-space: nowrap;
+        }
+
+        .status-overdue { background: #fee2e2; color: #b91c1c; }
+        .status-active  { background: #dcfce7; color: #15803d; }
+        .status-done    { background: #e0f2fe; color: #0369a1; }
+
+        /* ── Buttons ── */
+        button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.78rem;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            transition: 0.15s;
+        }
+
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-outline { border: 1px solid var(--border-light); background: white; color: var(--text-primary); }
+        .btn-outline:hover { border-color: #94a3b8; background: #f8fafc; }
+        .btn-danger { color: var(--accent-red); border: 1px solid #fecaca; background: #fff1f2; }
+        .btn-danger:hover { background: #fee2e2; }
+
+        /* ── Utilities ── */
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .flex-col     { display: flex; flex-direction: column; gap: 8px; }
+        .flex-gap     { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .mt-2  { margin-top: 8px; }
+        .mt-1  { margin-top: 4px; }
+        .text-small { font-size: 0.74rem; color: var(--text-secondary); }
+        .text-mono  { font-family: 'DM Mono', monospace; font-size: 0.72rem; }
+        .grid-2cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        input, select, textarea {
+            padding: 7px 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border-light);
+            width: 100%;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            background: white;
+            color: var(--text-primary);
+            transition: border-color 0.15s;
+        }
+
+        input:focus, select:focus { outline: none; border-color: var(--accent-blue); }
+
+        /* ── Notification Badge ── */
+        .notification-badge {
+            background: var(--accent-red);
+            color: white;
+            border-radius: 40px;
+            padding: 1px 7px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        /* ── KPI Cards ── */
+        .kpi-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 10px 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .kpi-icon {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; flex-shrink: 0;
+        }
+
+        .kpi-icon.blue  { background: #dbeafe; color: var(--accent-blue); }
+        .kpi-icon.red   { background: #fee2e2; color: var(--accent-red); }
+        .kpi-icon.green { background: #dcfce7; color: var(--accent-green); }
+        .kpi-icon.amber { background: #fef3c7; color: var(--accent-amber); }
+        .kpi-label { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 1px; }
+        .kpi-value { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); }
+
+        /* ── Empty State ── */
+        .empty-state {
+            text-align: center;
+            padding: 28px 16px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+        }
+
+        .empty-state i {
+            font-size: 1.6rem;
+            margin: 0 0 8px 0;
+            display: block;
+            color: #cbd5e1;
+        }
+
+        /* ── Team Section ── */
+        .team-section { margin-bottom: 16px; }
+
+        .team-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Announcements ── */
+        .announce-item {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: var(--radius-md);
+            padding: 8px 11px;
+            margin-bottom: 7px;
+            font-size: 0.78rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        /* ── Members ── */
+        .member-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.82rem;
+        }
+
+        .member-item:last-child { border-bottom: none; }
+
+        .member-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #c7d2fe, #a5b4fc);
+            color: #4338ca;
+            font-weight: 700;
+            font-size: 0.7rem;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .section-divider { border: none; border-top: 1px solid var(--border-light); margin: 14px 0; }
+
+        /* ── Loading ── */
+        .loading-dots { display: flex; justify-content: center; gap: 5px; padding: 20px; }
+        .loading-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-blue);
+            animation: dot-bounce 1.2s infinite ease-in-out;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dot-bounce {
+            0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ── Footer ── */
+        footer {
+            background-color: var(--bg-secondary);
+            border-top: 1px solid var(--border-light);
+            padding: 32px 0;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-copyright { color: var(--text-secondary); font-size: 15px; }
+
+        .footer-links { display: flex; gap: 24px; }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 15px;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover { color: var(--accent-blue); }
+
+        /* ── Responsive ── */
+        @media (max-width: 1000px) {
+            .dashboard { grid-template-columns: 1fr; }
+            .bigtasks-panel { grid-column: span 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 20px;
+                padding: 20px 0;
+            }
+            .nav-links { gap: 20px; }
+            .footer-content {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0 16px; }
+            .nav-links { gap: 16px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <img style="width: 10%;" src="../misc/Primary_Logo.png">
+                </div>
+                <nav class="nav-links">
+                    <a href="#" class="nav-link active">Dashboard</a>
+                    <a href="#" class="nav-link">Templates</a>
+                    <a href="#" class="nav-link">Documents</a>
+                    <a href="#" class="nav-link">Settings</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content">
+        <div class="container">
+
+            <!-- Dash sub-header -->
+            <div class="dash-header">
+                <h1>Studio <span>Operations</span> Dashboard</h1>
+                <span class="dash-meta" id="lastRefreshed">Loading...</span>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard">
+
+                <!-- Projects -->
+                <div class="panel projects-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-layer-group"></i> Projects</h2>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <input type="text" id="searchProject" placeholder="Filter…" style="width:130px;">
+                            <button class="btn-primary" id="quickAddProjectBtn">
+                                <i class="fas fa-plus" style="margin-right:4px;color:white;"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="projectsList">
+                        <div class="loading-dots"><span></span><span></span><span></span></div>
+                    </div>
+                </div>
+
+                <!-- Dev Season -->
+                <div class="panel devseason-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-calendar-alt"></i> Dev Season</h2>
+                        <button class="btn-outline" id="refreshSeasonBtn" title="Refresh">
+                            <i class="fas fa-sync-alt" style="margin:0;"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content" id="devSeasonInfo">
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-xmark"></i>Select a project to view its Dev Season
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Big Tasks -->
+                <div class="panel bigtasks-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-tasks"></i> Big Tasks by Teams</h2>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <input type="text" id="searchBigTask" placeholder="Filter tasks…" style="width:160px;">
+                            <button class="btn-primary" id="addBigTaskBtn">
+                                <i class="fas fa-plus" style="margin-right:4px;color:white;"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="bigTasksContainer">
+                        <div class="empty-state">
+                            <i class="fas fa-list-check"></i>Select a project first, then click a task to see subtasks
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Individual Tasks -->
+                <div class="panel individual-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-user-check"></i> Individual Tasks</h2>
+                        <button class="btn-outline" id="addSubtaskBtn">
+                            <i class="fas fa-plus" style="margin-right:4px;"></i> New
+                        </button>
+                    </div>
+                    <div class="panel-content" id="individualTasksList">
+                        <div class="empty-state">
+                            <i class="fas fa-hand-pointer"></i>Click a big task to see assignable subtasks
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools & KPIs -->
+                <div class="panel tools-panel">
+                    <div class="panel-header">
+                        <h2><i class="fas fa-chart-line"></i> Tools & KPIs</h2>
+                        <button id="refreshStatsBtn" class="btn-outline" title="Refresh stats">
+                            <i class="fas fa-rotate" style="margin:0;"></i>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div id="kpiStats" class="grid-2cols" style="margin-bottom:14px;"></div>
+                        <hr class="section-divider">
+                        <div class="flex-between" style="margin-bottom:10px;">
+                            <strong style="font-size:0.85rem;">📢 Announcements</strong>
+                            <button id="addAnnounceBtn" class="btn-primary">+ Post</button>
+                        </div>
+                        <div id="announceList"></div>
+                        <hr class="section-divider">
+                        <div class="flex-between" style="margin-bottom:10px;">
+                            <strong style="font-size:0.85rem;">👥 Team Members</strong>
+                            <button id="addMemberBtn" class="btn-outline">
+                                <i class="fas fa-user-plus"></i> Add
+                            </button>
+                        </div>
+                        <div id="membersList"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-copyright">© 2026 Asfoura - Miracle Doors Studio</div>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Help Center</a>
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const SUPABASE_URL      = "https://xjkcjcazvxkjjezjfngg.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_uHh_-XiWjxIuOJJd9hkskA_zJYZAdYG";
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ----- STATE -----
+        let currentProjectId = null;
+        let currentDevSeason = null;
+        let currentBigTaskId = null;
+        let allProjects      = [];
+        let allBigTasks      = [];
+        let allSubtasks      = [];
+        let allTeamMembers   = [];
+        let allAnnouncements = [];
+
+        // ----- HELPERS -----
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+        }
+
+        // ----- LOAD ALL -----
+        async function loadAllData() {
+            await Promise.all([
+                fetchProjects(),
+                fetchBigTasks(),
+                fetchSubtasks(),
+                fetchMembers(),
+                fetchAnnouncements()
+            ]);
+            renderProjects();
+            renderBigTasks();
+            renderIndividualTasks();
+            renderStatsAndKPIs();
+            renderMembersList();
+            renderAnnouncements();
+            if (currentProjectId) await fetchDevSeasonByProject(currentProjectId);
+            document.getElementById('lastRefreshed').textContent =
+                'Last refreshed: ' + new Date().toLocaleTimeString();
+        }
+
+        // ----- PROJECTS -----
+        async function fetchProjects() {
+            const { data, error } = await db.from('projects').select('*').order('created_at', { ascending: false });
+            if (!error) allProjects = data || [];
+            else console.error('fetchProjects:', error);
+        }
+
+        function renderProjects() {
+            const container  = document.getElementById('projectsList');
+            const searchTerm = document.getElementById('searchProject').value.toLowerCase();
+            const filtered   = allProjects.filter(p => p.name.toLowerCase().includes(searchTerm));
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-folder-open"></i>No projects found. Add one above.</div>';
+                return;
+            }
+            container.innerHTML = filtered.map(proj => `
+                <div class="project-card ${currentProjectId === proj.id ? 'selected' : ''}" data-id="${proj.id}">
+                    <div class="flex-between">
+                        <strong style="font-size:0.88rem;">${escapeHtml(proj.name)}</strong>
+                        <span class="badge ${proj.status === 'overdue' ? 'status-overdue' : proj.status === 'done' ? 'status-done' : 'status-active'}">${escapeHtml(proj.status || 'active')}</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${proj.progress || 0}%;"></div></div>
+                    <div class="flex-between text-small mt-1">
+                        <span class="text-mono">${proj.progress || 0}% complete</span>
+                        <div class="flex-gap">
+                            <button class="btn-outline editProjectBtn" data-id="${proj.id}">Edit</button>
+                            <button class="btn-danger deleteProjectBtn" data-id="${proj.id}">Del</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.addEventListener('click', e => {
+                    if (e.target.closest('.editProjectBtn') || e.target.closest('.deleteProjectBtn')) return;
+                    currentProjectId = parseInt(card.dataset.id);
+                    currentBigTaskId = null;
+                    renderProjects();
+                    renderBigTasks();
+                    fetchDevSeasonByProject(currentProjectId);
+                    document.getElementById('individualTasksList').innerHTML =
+                        '<div class="empty-state"><i class="fas fa-hand-pointer"></i>Select a big task to manage individual tasks</div>';
+                });
+            });
+
+            document.querySelectorAll('.editProjectBtn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    const newName = prompt('New project name:');
+                    if (newName) {
+                        await db.from('projects').update({ name: newName }).eq('id', parseInt(btn.dataset.id));
+                        await fetchProjects(); renderProjects();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.deleteProjectBtn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    if (confirm('Delete this project and all related data?')) {
+                        await db.from('projects').delete().eq('id', btn.dataset.id);
+                        if (currentProjectId == btn.dataset.id) {
+                            currentProjectId = null; currentDevSeason = null; currentBigTaskId = null;
+                            document.getElementById('devSeasonInfo').innerHTML =
+                                '<div class="empty-state"><i class="fas fa-calendar-xmark"></i>Select a project to view its Dev Season</div>';
+                            renderBigTasks();
+                        }
+                        await fetchProjects(); renderProjects();
+                    }
+                });
+            });
+        }
+
+        // ----- DEV SEASON -----
+        async function fetchDevSeasonByProject(projectId) {
+            const { data, error } = await db.from('dev_seasons').select('*').eq('project_id', projectId).maybeSingle();
+            if (error || !data) {
+                document.getElementById('devSeasonInfo').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-calendar-plus"></i>
+                        No Dev Season for this project.
+                        <br><br>
+                        <button class="btn-primary" id="createSeasonBtn">Create Season</button>
+                    </div>`;
+                document.getElementById('createSeasonBtn')?.addEventListener('click', () => createDevSeason(projectId));
+                currentDevSeason = null;
+                return;
+            }
+            currentDevSeason = data;
+            document.getElementById('devSeasonInfo').innerHTML = `
+                <div style="margin-bottom:12px;">
+                    <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">${escapeHtml(data.name || 'Season')}</div>
+                    <div class="text-small text-mono">${data.start_date || '—'} → ${data.end_date || '—'}</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${data.progress || 0}%;"></div></div>
+                <div class="flex-between text-small mt-1"><span>Progress</span><strong class="text-mono">${data.progress || 0}%</strong></div>
+                <hr class="section-divider">
+                <div style="font-size:0.8rem;"><strong>Milestones:</strong><br><span class="text-small">${escapeHtml(data.milestones || 'Not set')}</span></div>
+                <div class="mt-2"><button class="btn-outline" id="editSeasonBtn">✏️ Edit Season</button></div>
+            `;
+            document.getElementById('editSeasonBtn')?.addEventListener('click', () => editDevSeason());
+        }
+
+        async function createDevSeason(projectId) {
+            const name = prompt('Season name:');
+            if (!name) return;
+            await db.from('dev_seasons').insert({
+                project_id: projectId, name, progress: 0,
+                milestones: 'Planning', start_date: new Date().toISOString().slice(0, 10)
+            });
+            await fetchDevSeasonByProject(projectId);
+        }
+
+        async function editDevSeason() {
+            if (!currentDevSeason) return;
+            const newProgress = prompt('Progress %:', currentDevSeason.progress);
+            const newMiles    = prompt('Milestones:', currentDevSeason.milestones);
+            await db.from('dev_seasons').update({ progress: newProgress, milestones: newMiles }).eq('id', currentDevSeason.id);
+            await fetchDevSeasonByProject(currentProjectId);
+            renderStatsAndKPIs();
+        }
+
+        // ----- BIG TASKS -----
+        async function fetchBigTasks() {
+            const { data, error } = await db.from('big_tasks').select('*');
+            if (!error) allBigTasks = data || [];
+            else console.error('fetchBigTasks:', error);
+        }
+
+        function renderBigTasks() {
+            const container = document.getElementById('bigTasksContainer');
+            if (!currentProjectId) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-list-check"></i>Select a project to view team tasks</div>';
+                return;
+            }
+            const search = document.getElementById('searchBigTask').value.toLowerCase();
+            let filtered = allBigTasks.filter(t => t.project_id === currentProjectId);
+            if (search) filtered = filtered.filter(t =>
+                t.title.toLowerCase().includes(search) ||
+                (t.team_name && t.team_name.toLowerCase().includes(search))
+            );
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i>No big tasks yet for this project.</div>';
+                return;
+            }
+            const teamsGroup = {};
+            filtered.forEach(t => {
+                const team = t.team_name || 'General';
+                if (!teamsGroup[team]) teamsGroup[team] = [];
+                teamsGroup[team].push(t);
+            });
+            let html = '';
+            for (const [team, tasks] of Object.entries(teamsGroup)) {
+                html += `<div class="team-section">
+                    <div class="team-label"><i class="fas fa-users" style="margin:0;font-size:0.7rem;color:var(--text-muted);"></i> ${escapeHtml(team)}</div>`;
+                tasks.forEach(t => {
+                    html += `
+                    <div class="team-task-item ${currentBigTaskId === t.id ? 'selected' : ''}" data-bigid="${t.id}">
+                        <div class="flex-between">
+                            <span style="font-size:0.86rem;font-weight:600;">${escapeHtml(t.title)}</span>
+                            <div class="flex-gap">
+                                <span class="badge">${t.workload || 0}h</span>
+                                <span class="badge ${t.status === 'done' ? 'status-done' : 'status-active'}">${escapeHtml(t.status || 'active')}</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar"><div class="progress-fill" style="width:${t.progress || 0}%;background:var(--accent-green);"></div></div>
+                        <div class="flex-between text-small mt-1">
+                            <span class="text-mono">${t.progress || 0}%</span>
+                            <div class="flex-gap">
+                                <button class="btn-outline editBigBtn" data-id="${t.id}">Edit</button>
+                                <button class="btn-danger deleteBigBtn" data-id="${t.id}">Del</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>`;
+            }
+            container.innerHTML = html;
+
+            document.querySelectorAll('.team-task-item').forEach(el => {
+                el.addEventListener('click', e => {
+                    if (e.target.closest('.editBigBtn') || e.target.closest('.deleteBigBtn')) return;
+                    currentBigTaskId = parseInt(el.dataset.bigid);
+                    renderBigTasks();
+                    renderIndividualTasks();
+                });
+            });
+
+            document.querySelectorAll('.editBigBtn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    const newTitle = prompt('New task title:');
+                    if (newTitle) await db.from('big_tasks').update({ title: newTitle }).eq('id', parseInt(btn.dataset.id));
+                    await fetchBigTasks(); renderBigTasks();
+                });
+            });
+
+            document.querySelectorAll('.deleteBigBtn').forEach(btn => {
+                btn.addEventListener('click', async e => {
+                    e.stopPropagation();
+                    if (confirm('Delete this big task and its subtasks?')) {
+                        await db.from('big_tasks').delete().eq('id', btn.dataset.id);
+                        if (currentBigTaskId == btn.dataset.id) currentBigTaskId = null;
+                        await fetchBigTasks(); renderBigTasks(); renderIndividualTasks();
+                    }
+                });
+            });
+        }
+
+        // ----- INDIVIDUAL TASKS -----
+        async function fetchSubtasks() {
+            const { data, error } = await db.from('individual_tasks').select('*');
+            if (!error) allSubtasks = data || [];
+            else console.error('fetchSubtasks:', error);
+        }
+
+        function renderIndividualTasks() {
+            const container = document.getElementById('individualTasksList');
+            if (!currentBigTaskId) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-pointer"></i>Click any Big Task to view individual tasks</div>';
+                return;
+            }
+            const subtasks = allSubtasks.filter(st => st.big_task_id === currentBigTaskId);
+            if (subtasks.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-circle-plus"></i>No subtasks yet.<br><br>
+                        <button class="btn-primary" id="quickSubAdd">+ Add Subtask</button>
+                    </div>`;
+                document.getElementById('quickSubAdd')?.addEventListener('click', () => addSubtaskForm());
+                return;
+            }
+            container.innerHTML = subtasks.map(st => `
+                <div class="subtask-item" data-subid="${st.id}">
+                    <div class="flex-between">
+                        <strong style="font-size:0.85rem;">${escapeHtml(st.title)}</strong>
+                        <span class="badge ${st.priority === 'high' ? 'status-overdue' : st.priority === 'low' ? 'status-done' : ''}">${escapeHtml(st.priority || 'medium')}</span>
+                    </div>
+                    <div class="text-small mt-1">Due: <span class="text-mono">${st.deadline || '—'}</span> &nbsp;|&nbsp; Status: <span class="badge">${escapeHtml(st.status || 'todo')}</span></div>
+                    <div class="flex-gap mt-2">
+                        <select class="assignSelect" data-id="${st.id}" style="flex:1;">
+                            <option value="">Unassigned</option>
+                            ${allTeamMembers.map(m => `<option value="${escapeHtml(m.name)}" ${st.assigned_to === m.name ? 'selected' : ''}>${escapeHtml(m.name)}</option>`).join('')}
+                        </select>
+                        <button class="btn-outline editSubBtn" data-id="${st.id}">Edit</button>
+                        <button class="btn-danger deleteSubBtn" data-id="${st.id}">Del</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.assignSelect').forEach(sel => {
+                sel.addEventListener('change', async () => {
+                    await db.from('individual_tasks').update({ assigned_to: sel.value || null }).eq('id', parseInt(sel.dataset.id));
+                    await fetchSubtasks(); renderIndividualTasks();
+                });
+            });
+            document.querySelectorAll('.editSubBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const newTitle = prompt('New title:');
+                    if (newTitle) await db.from('individual_tasks').update({ title: newTitle }).eq('id', parseInt(btn.dataset.id));
+                    await fetchSubtasks(); renderIndividualTasks();
+                });
+            });
+            document.querySelectorAll('.deleteSubBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (confirm('Delete this task?')) {
+                        await db.from('individual_tasks').delete().eq('id', btn.dataset.id);
+                        await fetchSubtasks(); renderIndividualTasks(); renderStatsAndKPIs();
+                    }
+                });
+            });
+        }
+
+        function addSubtaskForm() {
+            const title = prompt('Subtask title:');
+            if (title && currentBigTaskId) {
+                db.from('individual_tasks')
+                    .insert({ title, big_task_id: currentBigTaskId, status: 'pending', priority: 'medium' })
+                    .then(async () => { await fetchSubtasks(); renderIndividualTasks(); renderStatsAndKPIs(); });
+            }
+        }
+
+        // ----- MEMBERS -----
+        async function fetchMembers() {
+            const { data, error } = await db.from('team_members').select('*');
+            if (!error) allTeamMembers = data || [];
+            else console.error('fetchMembers:', error);
+        }
+
+        function renderMembersList() {
+            const container = document.getElementById('membersList');
+            if (allTeamMembers.length === 0) {
+                container.innerHTML = '<div class="text-small" style="color:var(--text-secondary);">No members yet.</div>';
+                return;
+            }
+            container.innerHTML = allTeamMembers.map(m => `
+                <div class="member-item">
+                    <div class="flex-gap">
+                        <div class="member-avatar">${escapeHtml(m.name.charAt(0).toUpperCase())}</div>
+                        <div>
+                            <div style="font-size:0.82rem;font-weight:500;">${escapeHtml(m.name)}</div>
+                            <div class="text-small">${escapeHtml(m.role || 'member')}</div>
+                        </div>
+                    </div>
+                    <button class="btn-danger deleteMemberBtn" data-id="${m.id}">🗑</button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.deleteMemberBtn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    await db.from('team_members').delete().eq('id', btn.dataset.id);
+                    await fetchMembers(); renderMembersList(); renderStatsAndKPIs();
+                });
+            });
+        }
+
+        // ----- ANNOUNCEMENTS -----
+        async function fetchAnnouncements() {
+            const { data, error } = await db.from('announcements').select('*').order('created_at', { ascending: false });
+            if (!error) allAnnouncements = data || [];
+            else console.error('fetchAnnouncements:', error);
+        }
+
+        function renderAnnouncements() {
+            const container = document.getElementById('announceList');
+            if (allAnnouncements.length === 0) {
+                container.innerHTML = '<div class="text-small" style="color:var(--text-secondary);">No announcements yet.</div>';
+                return;
+            }
+            container.innerHTML = allAnnouncements.map(a => `
+                <div class="announce-item">
+                    <span>${escapeHtml(a.content)}</span>
+                    <span class="text-small text-mono" style="white-space:nowrap;">${new Date(a.created_at).toLocaleDateString()}</span>
+                </div>
+            `).join('');
+        }
+
+        // ----- KPIs -----
+        function renderStatsAndKPIs() {
+            const totalOverdue  = allSubtasks.filter(t => t.deadline && new Date(t.deadline) < new Date() && t.status !== 'done').length;
+            const seasonPercent = currentDevSeason ? (currentDevSeason.progress || 0) : 0;
+            const activeMembers = allTeamMembers.length;
+            const urgentTasks   = allSubtasks.filter(t => t.priority === 'high' && t.status !== 'done').length;
+            document.getElementById('kpiStats').innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-icon red"><i class="fas fa-exclamation-triangle" style="margin:0;color:inherit;"></i></div>
+                    <div><div class="kpi-label">Overdue</div><div class="kpi-value">${totalOverdue}${totalOverdue > 0 ? ' <span class="notification-badge">!</span>' : ''}</div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon blue"><i class="fas fa-chart-pie" style="margin:0;color:inherit;"></i></div>
+                    <div><div class="kpi-label">Season</div><div class="kpi-value text-mono">${seasonPercent}%</div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon green"><i class="fas fa-users" style="margin:0;color:inherit;"></i></div>
+                    <div><div class="kpi-label">Members</div><div class="kpi-value">${activeMembers}</div></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon amber"><i class="fas fa-fire" style="margin:0;color:inherit;"></i></div>
+                    <div><div class="kpi-label">Urgent</div><div class="kpi-value">${urgentTasks}</div></div>
+                </div>
+            `;
+        }
+
+        // ----- BUTTON LISTENERS -----
+        document.getElementById('quickAddProjectBtn').addEventListener('click', async () => {
+            const name = prompt('Project name:');
+            if (name) {
+                await db.from('projects').insert({ name, progress: 0, status: 'planning' });
+                await fetchProjects(); renderProjects(); renderStatsAndKPIs();
+            }
+        });
+
+        document.getElementById('addSubtaskBtn').addEventListener('click', () => {
+            if (currentBigTaskId) addSubtaskForm();
+            else alert('Select a big task first.');
+        });
+
+        document.getElementById('addMemberBtn').addEventListener('click', async () => {
+            const name = prompt('Member name:');
+            if (name) {
+                await db.from('team_members').insert({ name, role: 'member' });
+                await fetchMembers(); renderMembersList(); renderStatsAndKPIs();
+            }
+        });
+
+        document.getElementById('addAnnounceBtn').addEventListener('click', async () => {
+            const msg = prompt('Announcement text:');
+            if (msg) {
+                await db.from('announcements').insert({ content: msg });
+                await fetchAnnouncements(); renderAnnouncements();
+            }
+        });
+
+        document.getElementById('refreshStatsBtn').addEventListener('click', () => renderStatsAndKPIs());
+        document.getElementById('refreshSeasonBtn').addEventListener('click', () => {
+            if (currentProjectId) fetchDevSeasonByProject(currentProjectId);
+        });
+        document.getElementById('searchProject').addEventListener('input', () => renderProjects());
+        document.getElementById('searchBigTask').addEventListener('input', () => renderBigTasks());
+
+        document.getElementById('addBigTaskBtn').addEventListener('click', async () => {
+            if (!currentProjectId) { alert('Select a project first.'); return; }
+            const title     = prompt('Task title:');
+            if (!title) return;
+            const team_name = prompt('Team name (e.g. Design, Dev, Marketing):') || 'General';
+            const workload  = prompt('Estimated workload in hours:') || 0;
+            await db.from('big_tasks').insert({
+                project_id: currentProjectId,
+                title,
+                team_name,
+                workload: parseInt(workload),
+                progress: 0,
+                status: 'active'
+            });
+            await fetchBigTasks();
+            renderBigTasks();
+        });
+
+        // ----- BOOT -----
+        loadAllData();
+        setInterval(() => loadAllData(), 30000);
+        console.log("Supabase:", db);
+        document.addEventListener("DOMContentLoaded", async () => {
+            const { data: { user } } = await db.auth.getUser();
+
+            if (!user) {
+                // Not logged in → send back to login
+                window.location.href = "./index.html";
+            } else {
+                console.log("User is logged in:", user.email);
+            }
+        });
+    </script>
+</body>
+</html>
